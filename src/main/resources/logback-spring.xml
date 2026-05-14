@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback configuration for M-Pesa Gateway
+
+  Features:
+  - correlationId and transId in all log statements (via MDC)
+  - Async logging for both console and file
+  - Compressed archives (.gz) to save disk space
+  - Profile-based retention (2 days dev/test, 30 days prod)
+  - Graceful shutdown hook
+
+  Author: Oualid Gharach
+  Created: 2026-05-14
+-->
+<configuration>
+
+    <!-- Graceful shutdown: ensures async appenders flush on shutdown -->
+    <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook"/>
+
+    <!-- ============================================== -->
+    <!-- Properties                                     -->
+    <!-- ============================================== -->
+
+    <springProperty scope="context" name="appName"        source="spring.application.name"  defaultValue="mpesa-gateway"/>
+    <springProperty scope="context" name="asyncQueueSize" source="logging.async.queueSize"  defaultValue="1024"/>
+
+    <!--
+      Log pattern includes two MDC keys for end-to-end traceability:
+      - correlationId — propagated from Nginx via X-Correlation-ID header
+      - transId       — Safaricom transaction reference (idempotency key)
+    -->
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-NO_CORRELATION_ID}] [%X{transId:-}] %-5level %logger{36} - %msg%n"/>
+
+    <!-- Default retention: 30 days for production -->
+    <property name="LOG_RETENTION" value="30"/>
+
+    <!-- Override retention for development: 2 days -->
+    <springProfile name="dev">
+        <property name="LOG_RETENTION" value="2"/>
+    </springProfile>
+
+    <!-- ============================================== -->
+    <!-- Console Appender                               -->
+    <!-- ============================================== -->
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="CONSOLE"/>
+        <queueSize>${asyncQueueSize}</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>false</neverBlock>
+    </appender>
+
+    <!-- ============================================== -->
+    <!-- File Appender with Size and Time Based Rolling -->
+    <!-- ============================================== -->
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/${appName}.log</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>mpesa-gateway/archived/${appName}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>${LOG_RETENTION}</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <queueSize>${asyncQueueSize}</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>false</neverBlock>
+    </appender>
+
+    <!-- ============================================== -->
+    <!-- Logger Configuration Per Profile               -->
+    <!-- ============================================== -->
+
+    <!--
+      Development Profile: DEBUG level for detailed troubleshooting
+      - Console + File output
+      - DEBUG for application code
+      - DEBUG for Spring AMQP and Spring Web
+      - DEBUG for Spring Data MongoDB
+    -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="ASYNC_CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+        </root>
+        <logger name="com.mycompany.api.mpesa" level="DEBUG"/>
+        <logger name="org.springframework.amqp"   level="DEBUG"/>
+        <logger name="org.springframework.web"    level="DEBUG"/>
+        <logger name="org.springframework.data.mongodb" level="DEBUG"/>
+    </springProfile>
+
+    <!--
+      Production Profile: INFO level for important events only
+      - Console + File output
+      - INFO for application code
+      - WARN for libraries
+    -->
+    <springProfile name="prod">
+        <root level="WARN">
+            <appender-ref ref="ASYNC_CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+        </root>
+        <logger name="com.mycompany.api.mpesa" level="INFO"/>
+        <logger name="org.springframework.amqp"   level="WARN"/>
+        <logger name="org.springframework"        level="WARN"/>
+    </springProfile>
+
+</configuration>
