@@ -10,6 +10,7 @@
  */
 package com.mycompany.api.mpesa.document;
 
+import com.mycompany.api.mpesa.enums.OutboxStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,6 +27,18 @@ import java.time.Instant;
  * <p>Created atomically alongside {@link MpesaEvent} during confirmation ingest.
  * Stores publication intent only — all business data remains in {@link MpesaEvent}.
  *
+ * <p>Lifecycle is managed by the outbox processor:
+ * <ul>
+ *   <li>Created as {@code PENDING}</li>
+ *   <li>Claimed atomically — transitions to {@code PROCESSING} with {@code claimedAt}</li>
+ *   <li>On successful publish — transitions to {@code SENT}, {@code claimedAt} cleared</li>
+ *   <li>On publish failure — reset to {@code PENDING} with {@code attemptCount} incremented
+ *       and {@code lastError} recorded</li>
+ *   <li>On stale lease (JVM crash) — reset to {@code PENDING} by lease timeout check</li>
+ *   <li>On permanent failure (missing event) — transitions to {@code FAILED},
+ *       {@code claimedAt} cleared</li>
+ * </ul>
+ *
  * <p>{@code @Data} is not used — {@code equals}/{@code hashCode} are based on
  * {@code id} only.
  *
@@ -35,7 +48,7 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @Document(collection = "outbox_entries")
-@CompoundIndex(name = "idx_sent_created_at", def = "{'sent': 1, 'createdAt': 1}")
+@CompoundIndex(name = "idx_status_created_at", def = "{'status': 1, 'createdAt': 1}")
 public class OutboxEntry {
 
     @Id
@@ -44,22 +57,34 @@ public class OutboxEntry {
     /** Reference to the corresponding {@link MpesaEvent#getId()}. */
     private ObjectId eventId;
 
-    /** {@code true} only after the provisioning message is broker-acknowledged. Primitive — never null. */
-    private boolean sent;
+    /** Current processing status. */
+    private OutboxStatus status;
+
+    /** Number of publish attempts — incremented on each transient failure for operational visibility. */
+    private int attemptCount;
+
+    /** Last error message — set on publish failure for operational debugging. */
+    private String lastError;
 
     private Instant createdAt;
+
+    /** Set when the entry is claimed by the outbox processor. Cleared on terminal transitions. */
+    private Instant claimedAt;
+
+    /** Set only after successful publish call. */
     private Instant publishedAt;
 
     /**
-     * Creates an unsent outbox entry for the given event.
+     * Creates a new outbox entry in {@code PENDING} state for the given event.
      *
      * @param eventId the ID of the corresponding {@link MpesaEvent}
-     * @return a new unsent {@link OutboxEntry}
+     * @return a new {@link OutboxEntry} ready for processing
      */
     public static OutboxEntry forEvent(ObjectId eventId) {
         OutboxEntry entry = new OutboxEntry();
         entry.setEventId(eventId);
-        entry.setSent(false);
+        entry.setStatus(OutboxStatus.PENDING);
+        entry.setAttemptCount(0);
         entry.setCreatedAt(Instant.now());
         return entry;
     }

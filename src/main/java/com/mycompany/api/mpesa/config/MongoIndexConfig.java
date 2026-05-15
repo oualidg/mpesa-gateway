@@ -31,10 +31,6 @@ import org.springframework.data.mongodb.core.index.Index;
  * <p>All index operations are idempotent — re-running on restart is safe. MongoDB
  * will not recreate an index that already exists with the same definition.
  *
- * <p>Indexes managed here must be kept in sync with the {@code @Indexed} and
- * {@code @CompoundIndex} annotations on {@link MpesaEvent} and {@link OutboxEntry},
- * which serve as documentation only when auto-index creation is disabled.
- *
  * @author Oualid Gharach
  */
 @Slf4j
@@ -47,42 +43,49 @@ public class MongoIndexConfig {
     /**
      * Creates all required indexes for the M-Pesa Gateway collections.
      *
-     * <p>Triggered on {@link ApplicationReadyEvent} to ensure the full application
-     * context — including MongoDB connection — is available before index creation.
+     * <p>Triggered on {@link ApplicationReadyEvent}.
      *
      * <p>Indexes created:
      * <ul>
-     *   <li>{@code mpesa_events.transId} — unique, idempotency control for duplicate callbacks</li>
+     *   <li>{@code mpesa_events.transId} — unique sparse, idempotency control</li>
      *   <li>{@code mpesa_events.state} — state filtering queries</li>
      *   <li>{@code mpesa_events.createdAt} — time-based queries</li>
      *   <li>{@code mpesa_events.(state, createdAt)} — backlog queries</li>
-     *   <li>{@code outbox_entries.(sent, createdAt)} — outbox processor polling</li>
+     *   <li>{@code outbox_entries.(status, createdAt)} — outbox processor polling</li>
+     *   <li>{@code outbox_entries.(status, claimedAt)} — stale lease detection</li>
      * </ul>
      */
     @EventListener(ApplicationReadyEvent.class)
     public void createIndexes() {
         log.debug("Creating MongoDB indexes for mpesa_events and outbox_entries collections");
 
-        var indexOps = mongoTemplate.indexOps(MpesaEvent.class);
+        var mpesaIndexOps = mongoTemplate.indexOps(MpesaEvent.class);
 
-        indexOps.createIndex(new Index()
+        mpesaIndexOps.createIndex(new Index()
                 .on("transId", Sort.Direction.ASC)
                 .unique()
                 .sparse()
                 .named("idx_trans_id_unique"));
 
-        indexOps.createIndex(new Index()
+        mpesaIndexOps.createIndex(new Index()
                 .on("state", Sort.Direction.ASC)
                 .named("idx_state"));
 
-        indexOps.createIndex(new Index()
+        mpesaIndexOps.createIndex(new Index()
                 .on("createdAt", Sort.Direction.ASC)
                 .named("idx_created_at"));
 
-        mongoTemplate.indexOps(OutboxEntry.class).createIndex(new Index()
-                .on("sent", Sort.Direction.ASC)
+        var outboxIndexOps = mongoTemplate.indexOps(OutboxEntry.class);
+
+        outboxIndexOps.createIndex(new Index()
+                .on("status", Sort.Direction.ASC)
                 .on("createdAt", Sort.Direction.ASC)
-                .named("idx_sent_created_at"));
+                .named("idx_status_created_at"));
+
+        outboxIndexOps.createIndex(new Index()
+                .on("status", Sort.Direction.ASC)
+                .on("claimedAt", Sort.Direction.ASC)
+                .named("idx_status_claimed_at"));
 
         log.debug("MongoDB indexes created successfully");
     }

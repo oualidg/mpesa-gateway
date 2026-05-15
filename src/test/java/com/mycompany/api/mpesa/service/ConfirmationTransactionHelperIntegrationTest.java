@@ -10,6 +10,7 @@
  */
 package com.mycompany.api.mpesa.service;
 
+import com.mycompany.api.mpesa.BaseIntegrationTest;
 import com.mycompany.api.mpesa.document.MpesaEvent;
 import com.mycompany.api.mpesa.document.OutboxEntry;
 import com.mycompany.api.mpesa.repository.MpesaEventRepository;

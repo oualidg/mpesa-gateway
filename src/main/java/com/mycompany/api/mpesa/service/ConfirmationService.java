@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycompany.api.mpesa.document.MpesaEvent;
 import com.mycompany.api.mpesa.dto.CallbackRequest;
 import com.mycompany.api.mpesa.mapper.MpesaEventMapper;
+import com.mycompany.api.mpesa.util.BillRefNormaliser;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +35,12 @@ import java.util.stream.Collectors;
  * <p>Maps the inbound request to a {@link MpesaEvent}, validates critical fields,
  * and persists the event atomically with its outbox entry. Invalid events are
  * persisted as {@code SUSPENDED} rather than rejected — no callback is ever lost.
+ *
+ * <p>Sets {@code correlationId} from MDC at ingest time so the same identifier
+ * propagates end-to-end through outbox publish, provisioning, and result handling.
+ *
+ * <p>Sets {@code resolvedReferenceType} after bill reference normalisation so the
+ * outbox processor reads it directly without re-normalising at publish time.
  *
  * <p>All MongoDB writes are delegated to {@link ConfirmationTransactionHelper}.
  * {@code @Transactional} is not used here — see Convention §9.5.
@@ -72,6 +80,13 @@ public class ConfirmationService {
                     event.getBillRefNumber(),
                     event.getTransTime());
 
+            // Set correlationId from MDC at the first ingest boundary —
+            // propagates end-to-end through outbox, provisioning, and result handling.
+            String mdcCorrelationId = MDC.get("correlationId");
+            event.setCorrelationId(mdcCorrelationId != null
+                    ? UUID.fromString(mdcCorrelationId)
+                    : UUID.randomUUID());
+
             Set<ConstraintViolation<CallbackRequest>> violations = validator.validate(request);
             if (!violations.isEmpty()) {
                 String reason = buildViolationReason(violations);
@@ -80,12 +95,15 @@ public class ConfirmationService {
                 return;
             }
 
+            // Resolve and store the reference type at ingest — outbox processor
+            // reads it directly without re-normalising at publish time.
+            BillRefNormaliser.normalise(event.getBillRefNumber())
+                    .ifPresent(strategy -> event.setResolvedReferenceType(strategy.type()));
+
             try {
                 transactionHelper.persistReceivedWithOutbox(event);
                 log.info("Confirmation ingested successfully.");
             } catch (DuplicateKeyException e) {
-                // Duplicate transId — event already persisted by a previous or concurrent
-                // callback. Return silently — controller returns HTTP 200 per spec.
                 log.info("Duplicate confirmation callback — ignoring.");
             }
 
@@ -100,12 +118,6 @@ public class ConfirmationService {
 
     /**
      * Builds a JSON-formatted failure reason string from constraint violations.
-     *
-     * <p>Format: {@code {"fieldName":"violation message", ...}}
-     * If multiple violations exist for the same field, messages are concatenated
-     * with a semicolon separator.
-     *
-     * <p>Falls back to a plain comma-separated string if JSON serialisation fails.
      *
      * @param violations the set of constraint violations
      * @return JSON-formatted failure reason string

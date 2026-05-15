@@ -11,6 +11,7 @@
 package com.mycompany.api.mpesa.document;
 
 import com.mycompany.api.mpesa.enums.MpesaEventState;
+import com.mycompany.api.mpesa.util.BillRefNormaliser.ReferenceType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,6 +23,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * MongoDB document representing a Safaricom M-Pesa C2B payment event.
@@ -29,18 +31,12 @@ import java.time.Instant;
  * <p>Created on confirmation callback ingest and updated throughout its lifecycle.
  * Acts as the source of truth for all M-Pesa payment processing within the Gateway.
  *
- * <p><strong>Validation strategy:</strong> All validation is performed on
- * {@link com.mycompany.api.mpesa.dto.CallbackRequest} before mapping — this
- * document carries no Jakarta validation annotations. The confirmation service
- * validates the raw request manually via {@code Validator.validate(request)}
- * before mapping to this document.
+ * <p>{@code correlationId} is set at ingest from the HTTP request MDC context and
+ * propagated through the entire processing pipeline — outbox publish, provisioning,
+ * and result handling — enabling end-to-end traceability using a single identifier.
  *
- * <p><strong>DO NOT add validation annotations to any field on this document.</strong>
- * Validation belongs on {@link com.mycompany.api.mpesa.dto.CallbackRequest} only.
- *
- * <p>{@code transTime} is stored as a raw string exactly as received from Safaricom —
- * no parsing is applied, ensuring no data loss if Safaricom changes their timestamp
- * format. It is used for reconciliation only and is never forwarded to the UA Service.
+ * <p>{@code resolvedReferenceType} is set at ingest after successful bill reference
+ * normalisation. The outbox processor reads it directly — no re-normalisation required.
  *
  * <p>State transitions:
  * <ul>
@@ -86,17 +82,17 @@ public class MpesaEvent {
     private BigDecimal amount;
     private String businessShortCode;
 
-    /** Normalised bill reference stored as received. Resolved to account or customer at outbox publish time. */
+    /** Normalised bill reference stored as received. Reference type resolved at ingest and stored on {@code resolvedReferenceType}. */
     private String billRefNumber;
 
     // =========================================================================
-    // Reconciliation fields — stored as-is. DO NOT add validation annotations.
-    // Missing or malformed values must never cause a payment to be suspended.
+    // Reconciliation fields — stored as-is. DO NOT add validation annotations
+    // here. Missing or malformed values must never cause a payment to be suspended.
     // =========================================================================
 
     private String transactionType;
 
-    /** Raw Safaricom timestamp string — stored as-is. Never parsed or forwarded to UA Service. */
+    /** Raw Safaricom timestamp string — stored as-is for reconciliation. Never parsed or forwarded. */
     private String transTime;
 
     private String invoiceNumber;
@@ -110,6 +106,16 @@ public class MpesaEvent {
     // =========================================================================
     // Lifecycle fields — set by the service layer, never by the mapper.
     // =========================================================================
+
+    /** End-to-end trace identifier — set at ingest from HTTP request MDC context. Propagated through outbox and provisioning. */
+    private UUID correlationId;
+
+    /**
+     * Resolved bill reference type — set at ingest after normalisation.
+     * The outbox processor reads this directly to avoid re-normalising at publish time.
+     * Null for SUSPENDED events where normalisation failed.
+     */
+    private ReferenceType resolvedReferenceType;
 
     private MpesaEventState state;
     private String billingReceipt;

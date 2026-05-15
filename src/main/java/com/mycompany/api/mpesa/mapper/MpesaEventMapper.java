@@ -21,8 +21,9 @@ import org.mapstruct.Named;
  *
  * <p>Mapping always succeeds — null fields stay null and no exceptions are thrown
  * during conversion. All string fields are trimmed to normalise leading and trailing
- * whitespace from external Safaricom payloads. {@code transId} is additionally
- * normalised to null if blank, ensuring consistent sparse index behaviour.
+ * whitespace from external Safaricom payloads. Blank {@code transId} is normalised
+ * to null after trimming in the confirmation service to ensure consistent sparse
+ * index behaviour.
  *
  * <p>{@code transTime} is mapped as a raw string — no parsing is applied, preserving
  * the original Safaricom value regardless of format changes.
@@ -33,7 +34,8 @@ import org.mapstruct.Named;
  *
  * <p>Fields not present on {@link CallbackRequest} — {@code state},
  * {@code createdAt}, {@code billingReceipt}, {@code failureReason}, {@code postedAt},
- * {@code updatedAt} — are set by the confirmation service after mapping, never here.
+ * {@code updatedAt}, {@code correlationId}, {@code resolvedReferenceType} —
+ * are set by the confirmation service after mapping, never here.
  *
  * @author Oualid Gharach
  */
@@ -57,6 +59,8 @@ public interface MpesaEventMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "postedAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "correlationId", ignore = true)
+    @Mapping(target = "resolvedReferenceType", ignore = true)
     @Mapping(target = "transId", source = "transId", qualifiedByName = "trimToNull")
     @Mapping(target = "transactionType", source = "transactionType", qualifiedByName = "trim")
     @Mapping(target = "businessShortCode", source = "businessShortCode", qualifiedByName = "trim")
@@ -71,30 +75,11 @@ public interface MpesaEventMapper {
     @Mapping(target = "transTime", source = "transTime", qualifiedByName = "trim")
     MpesaEvent toMpesaEvent(CallbackRequest request);
 
-    /**
-     * Trims leading and trailing whitespace from a string value.
-     *
-     * <p>Returns null if the input is null — null fields are preserved as-is
-     * and not converted to empty strings.
-     *
-     * @param value the string to trim
-     * @return trimmed string, or null if input is null
-     */
     @Named("trim")
     default String trim(String value) {
         return value != null ? value.trim() : null;
     }
 
-    /**
-     * Trims leading and trailing whitespace from a string value and returns
-     * null if the result is empty.
-     *
-     * <p>Used for {@code transId} only — ensures empty or whitespace-only values
-     * become null for consistent sparse index behaviour.
-     *
-     * @param value the string to trim
-     * @return trimmed string, null if input is null or blank
-     */
     @Named("trimToNull")
     default String trimToNull(String value) {
         if (value == null) return null;

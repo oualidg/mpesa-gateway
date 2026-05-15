@@ -26,6 +26,8 @@ import java.time.Duration;
  * @param pollInterval    how frequently the outbox processor polls for unsent entries
  * @param batchSize       maximum number of entries processed per poll cycle
  * @param alertThreshold  duration after which unsent entries trigger an alert
+ * @param leaseTimeout    duration after which a PROCESSING entry is considered stale and reset to PENDING —
+ *                        protects against JVM crash between claim and publish
  *
  * @author Oualid Gharach
  */
@@ -33,6 +35,7 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "app.outbox")
 public record OutboxProperties(
         @NotNull Duration pollInterval,
-        @Positive int batchSize,
-        @NotNull Duration alertThreshold
+        @NotNull @Positive int batchSize,
+        @NotNull Duration alertThreshold,
+        @NotNull Duration leaseTimeout
 ) {}

@@ -40,7 +40,7 @@ public class BillRefNormaliser {
     private BillRefNormaliser() {}
 
     /**
-     * Represents the type of a resolved bill reference.
+     * Represents the type of resolved bill reference.
      */
     public enum ReferenceType {
         /** Resolved to a 10-digit account number. */
@@ -79,6 +79,24 @@ public class BillRefNormaliser {
                 case ACCOUNT -> ACCOUNT_VALIDATE_PATH;
                 case CUSTOMER -> CUSTOMER_VALIDATE_PATH;
             };
+        }
+
+        /**
+         * Returns {@code true} if this strategy resolved to an account number.
+         *
+         * @return {@code true} for {@link ReferenceType#ACCOUNT}
+         */
+        public boolean isAccount() {
+            return type == ReferenceType.ACCOUNT;
+        }
+
+        /**
+         * Returns {@code true} if this strategy resolved to a customer number.
+         *
+         * @return {@code true} for {@link ReferenceType#CUSTOMER}
+         */
+        public boolean isCustomer() {
+            return type == ReferenceType.CUSTOMER;
         }
     }
 

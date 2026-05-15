@@ -165,6 +165,8 @@ class MpesaEventMapperTest {
         assertThat(event.getCreatedAt()).isNull();
         assertThat(event.getPostedAt()).isNull();
         assertThat(event.getUpdatedAt()).isNull();
+        assertThat(event.getCorrelationId()).isNull();
+        assertThat(event.getResolvedReferenceType()).isNull();
     }
 
     // =========================================================================

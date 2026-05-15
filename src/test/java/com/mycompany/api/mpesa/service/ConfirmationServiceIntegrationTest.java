@@ -10,11 +10,12 @@
  */
 package com.mycompany.api.mpesa.service;
 
-import com.mycompany.api.mpesa.client.UaValidationClient;
+import com.mycompany.api.mpesa.BaseIntegrationTest;
 import com.mycompany.api.mpesa.document.MpesaEvent;
 import com.mycompany.api.mpesa.document.OutboxEntry;
 import com.mycompany.api.mpesa.dto.CallbackRequest;
 import com.mycompany.api.mpesa.enums.MpesaEventState;
+import com.mycompany.api.mpesa.enums.OutboxStatus;
 import com.mycompany.api.mpesa.repository.MpesaEventRepository;
 import com.mycompany.api.mpesa.repository.OutboxEntryRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 
 import java.math.BigDecimal;
@@ -84,9 +80,13 @@ class ConfirmationServiceIntegrationTest extends BaseIntegrationTest {
         assertThat(events.getFirst().getState()).isEqualTo(MpesaEventState.RECEIVED);
         assertThat(events.getFirst().getTransId()).isEqualTo("NLJ7RT61SV");
         assertThat(events.getFirst().getCreatedAt()).isNotNull();
+        assertThat(events.getFirst().getCorrelationId()).isNotNull();
+        assertThat(events.getFirst().getResolvedReferenceType())
+                .isEqualTo(com.mycompany.api.mpesa.util.BillRefNormaliser.ReferenceType.ACCOUNT);
 
         assertThat(outboxEntries).hasSize(1);
-        assertThat(outboxEntries.getFirst().isSent()).isFalse();
+        assertThat(outboxEntries.getFirst().getStatus()).isEqualTo(OutboxStatus.PENDING);
+        assertThat(outboxEntries.getFirst().getAttemptCount()).isZero();
         assertThat(outboxEntries.getFirst().getEventId()).isEqualTo(events.getFirst().getId());
     }
 

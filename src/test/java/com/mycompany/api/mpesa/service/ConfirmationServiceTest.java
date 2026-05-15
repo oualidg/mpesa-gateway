@@ -27,7 +27,9 @@ import org.springframework.dao.DuplicateKeyException;
 
 import java.math.BigDecimal;
 import java.util.Set;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -157,5 +159,38 @@ class ConfirmationServiceTest {
                         () -> confirmationService.ingest(validRequest))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("MongoDB failure");
+    }
+
+    // =========================================================================
+    // Correlation ID and Reference Type
+    // =========================================================================
+
+    @Test
+    @DisplayName("Sets correlationId from MDC on valid request")
+    void shouldSetCorrelationIdFromMdcOnValidRequest() {
+        String correlationId = UUID.randomUUID().toString();
+        org.slf4j.MDC.put("correlationId", correlationId);
+
+        when(mapper.toMpesaEvent(validRequest)).thenReturn(mappedEvent);
+        when(validator.validate(validRequest)).thenReturn(Set.of());
+
+        try {
+            confirmationService.ingest(validRequest);
+            assertThat(mappedEvent.getCorrelationId()).isNotNull();
+        } finally {
+            org.slf4j.MDC.remove("correlationId");
+        }
+    }
+
+    @Test
+    @DisplayName("Sets resolvedReferenceType to ACCOUNT for valid 10-digit bill reference")
+    void shouldSetResolvedReferenceTypeForValidAccountBillRef() {
+        when(mapper.toMpesaEvent(validRequest)).thenReturn(mappedEvent);
+        when(validator.validate(validRequest)).thenReturn(Set.of());
+
+        confirmationService.ingest(validRequest);
+
+        assertThat(mappedEvent.getResolvedReferenceType())
+                .isEqualTo(com.mycompany.api.mpesa.util.BillRefNormaliser.ReferenceType.ACCOUNT);
     }
 }

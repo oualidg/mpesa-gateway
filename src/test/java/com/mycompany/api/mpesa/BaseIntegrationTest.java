@@ -8,7 +8,7 @@
  *
  * Feel free to use or contribute. Contact: oualid.gharach@gmail.com
  */
-package com.mycompany.api.mpesa.service;
+package com.mycompany.api.mpesa;
 
 import com.mycompany.api.mpesa.client.UaValidationClient;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -18,7 +18,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
