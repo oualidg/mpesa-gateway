@@ -19,6 +19,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -54,6 +55,7 @@ import org.springframework.web.client.RestClientResponseException;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Order(1)
 public class UaValidationClient {
 
     private final RestClient uaServiceRestClient;

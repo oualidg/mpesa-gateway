@@ -61,7 +61,7 @@ public class MongoIndexConfig {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void createIndexes() {
-        log.info("Creating MongoDB indexes for mpesa_events and outbox_entries collections");
+        log.debug("Creating MongoDB indexes for mpesa_events and outbox_entries collections");
 
         var indexOps = mongoTemplate.indexOps(MpesaEvent.class);
 
@@ -84,6 +84,6 @@ public class MongoIndexConfig {
                 .on("createdAt", Sort.Direction.ASC)
                 .named("idx_sent_created_at"));
 
-        log.info("MongoDB indexes created successfully");
+        log.debug("MongoDB indexes created successfully");
     }
 }

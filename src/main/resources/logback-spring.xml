@@ -89,11 +89,9 @@
     <!-- ============================================== -->
 
     <!--
-      Development Profile: DEBUG level for detailed troubleshooting
+      Development Profile: DEBUG for application code, WARN for all libraries.
       - Console + File output
-      - DEBUG for application code
-      - DEBUG for Spring AMQP and Spring Web
-      - DEBUG for Spring Data MongoDB
+      - DEBUG for application code only
     -->
     <springProfile name="dev">
         <root level="INFO">
@@ -101,9 +99,10 @@
             <appender-ref ref="ASYNC_FILE"/>
         </root>
         <logger name="com.mycompany.api.mpesa" level="DEBUG"/>
-        <logger name="org.springframework.amqp"   level="DEBUG"/>
-        <logger name="org.springframework.web"    level="DEBUG"/>
-        <logger name="org.springframework.data.mongodb" level="DEBUG"/>
+        <logger name="org.mongodb.driver" level="WARN"/>
+        <logger name="org.springframework.amqp" level="WARN"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.springframework.data.mongodb" level="WARN"/>
     </springProfile>
 
     <!--
@@ -118,8 +117,9 @@
             <appender-ref ref="ASYNC_FILE"/>
         </root>
         <logger name="com.mycompany.api.mpesa" level="INFO"/>
-        <logger name="org.springframework.amqp"   level="WARN"/>
-        <logger name="org.springframework"        level="WARN"/>
+        <logger name="org.mongodb.driver" level="WARN"/>
+        <logger name="org.springframework.amqp" level="WARN"/>
+        <logger name="org.springframework" level="WARN"/>
     </springProfile>
 
 </configuration>
