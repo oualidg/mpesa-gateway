@@ -32,6 +32,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mycompany.api.mpesa.config.AppConfig.PROVIDER_CODE;
+
 /**
  * Scheduled component that polls the outbox collection for pending entries and
  * publishes provisioning messages to RabbitMQ.
@@ -71,8 +73,6 @@ public class OutboxProcessor {
     private final RabbitTemplate rabbitTemplate;
     private final OutboxProperties outboxProperties;
     private final MessagingProperties messagingProperties;
-
-    private static final String PROVIDER_CODE = "MPESA";
 
     /**
      * Main poll cycle — resets stale leases then claims and processes pending entries.

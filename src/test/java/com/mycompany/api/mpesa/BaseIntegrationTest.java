@@ -11,6 +11,7 @@
 package com.mycompany.api.mpesa;
 
 import com.mycompany.api.mpesa.client.UaValidationClient;
+import com.mycompany.api.mpesa.messaging.MpesaResultListener;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -58,4 +59,7 @@ public abstract class BaseIntegrationTest {
 
     @MockitoBean
     protected UaValidationClient uaValidationClient;
+
+    @MockitoBean
+    protected MpesaResultListener mpesaResultListener;
 }

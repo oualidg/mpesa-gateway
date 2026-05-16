@@ -24,6 +24,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
+import static com.mycompany.api.mpesa.config.AppConfig.CORRELATION_ID_HEADER;
+import static com.mycompany.api.mpesa.config.AppConfig.MDC_CORRELATION_ID;
+
 /**
  * Servlet filter that establishes a correlation ID for every inbound request.
  *
@@ -47,9 +50,6 @@ import java.util.UUID;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class CorrelationIdFilter extends OncePerRequestFilter {
-
-    private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
-    private static final String MDC_CORRELATION_ID = "correlationId";
 
     /**
      * Extracts or generates a correlation ID and places it in MDC for the

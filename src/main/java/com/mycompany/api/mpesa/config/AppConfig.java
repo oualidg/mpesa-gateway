@@ -20,6 +20,9 @@ import org.springframework.context.annotation.Configuration;
  * <p>Messaging properties are excluded — they are registered in
  * {@link MessagingConfig} where they are tightly coupled to RabbitMQ bean setup.
  *
+ * <p>Tracing constants are centralised here to ensure consistent MDC key names
+ * and HTTP header names across all components.
+ *
  * @author Oualid Gharach
  */
 @Configuration
@@ -31,4 +34,8 @@ import org.springframework.context.annotation.Configuration;
         GatewayProperties.class
 })
 public class AppConfig {
+    public static final String MDC_CORRELATION_ID    = "correlationId";
+    public static final String MDC_TRANS_ID          = "transId";
+    public static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
+    public static final String PROVIDER_CODE = "MPESA";
 }

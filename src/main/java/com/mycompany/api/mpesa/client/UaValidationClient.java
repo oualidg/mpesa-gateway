@@ -26,6 +26,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import static com.mycompany.api.mpesa.config.AppConfig.CORRELATION_ID_HEADER;
+import static com.mycompany.api.mpesa.config.AppConfig.MDC_CORRELATION_ID;
+
 /**
  * Outbound HTTP client for UA Service account and customer validation calls.
  *
@@ -84,7 +87,7 @@ public class UaValidationClient {
             ResponseEntity<Void> response = uaServiceRestClient.get()
                     .uri(strategy.path(), strategy.reference())
                     .header("X-Api-Key", uaServiceProperties.apiKey())
-                    .header("X-Correlation-ID", MDC.get("correlationId"))
+                    .header(CORRELATION_ID_HEADER, MDC.get(MDC_CORRELATION_ID))
                     .retrieve()
                     .toBodilessEntity();
 

@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
+import static com.mycompany.api.mpesa.config.AppConfig.MDC_TRANS_ID;
+
 /**
  * Service responsible for handling Safaricom C2B validation callbacks.
  *
@@ -49,8 +51,6 @@ import org.springframework.stereotype.Service;
 public class ValidationService {
 
     private final UaValidationClient uaValidationClient;
-
-    private static final String MDC_TRANS_ID = "transId";
 
     /**
      * Validates a Safaricom C2B payment request before funds are collected.

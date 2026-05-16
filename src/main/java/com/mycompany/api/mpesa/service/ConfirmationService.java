@@ -29,6 +29,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.mycompany.api.mpesa.config.AppConfig.MDC_TRANS_ID;
+
 /**
  * Handles Safaricom C2B confirmation callbacks — Stage 1 of the confirmation pipeline.
  *
@@ -56,8 +58,6 @@ public class ConfirmationService {
     private final Validator validator;
     private final ObjectMapper objectMapper;
     private final ConfirmationTransactionHelper transactionHelper;
-
-    private static final String MDC_TRANS_ID = "transId";
 
     /**
      * Ingests a Safaricom C2B confirmation callback.

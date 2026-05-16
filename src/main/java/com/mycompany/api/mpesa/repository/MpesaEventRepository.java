@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Spring Data MongoDB repository for {@link MpesaEvent} documents.
@@ -52,4 +53,16 @@ public interface MpesaEventRepository extends MongoRepository<MpesaEvent, Object
             String billRefNumber,
             MpesaEventState state,
             Instant since);
+
+
+    /**
+     * Finds a {@link MpesaEvent} by its Safaricom transaction reference.
+     *
+     * <p>Used by {@link com.mycompany.api.mpesa.service.ResultProcessingService}
+     * to locate the event when applying a provisioning result.
+     *
+     * @param transId the Safaricom transaction reference
+     * @return the matching event, or empty if not found
+     */
+    Optional<MpesaEvent> findByTransId(String transId);
 }
