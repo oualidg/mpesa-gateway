@@ -107,6 +107,7 @@ public class OpenApiConfig {
                 .group("mpesa-callbacks")
                 .displayName("M-Pesa Callbacks")
                 .pathsToMatch("/mpesa/v1/**")
+                .addOpenApiCustomizer(callbackTokenParameterCustomizer())
                 .build();
     }
 
@@ -118,7 +119,6 @@ public class OpenApiConfig {
      * every request. The value is read from {@code app.callback.token} so it
      * stays in sync with the running configuration automatically.</p>
      */
-    @Bean
     public OpenApiCustomizer callbackTokenParameterCustomizer() {
         return openApi -> openApi.getPaths().forEach((path, item) -> {
             if (path.startsWith("/mpesa/")) {
