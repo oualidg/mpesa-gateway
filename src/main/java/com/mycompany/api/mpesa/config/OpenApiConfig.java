@@ -75,6 +75,7 @@ public class OpenApiConfig {
     @Value("${app.callback.token}")
     private String callbackToken;
 
+
     /**
      * Global OpenAPI metadata -- title, version, description, contact.
      */
