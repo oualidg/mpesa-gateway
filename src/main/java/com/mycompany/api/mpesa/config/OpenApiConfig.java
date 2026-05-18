@@ -26,8 +26,8 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>Exposes a single API group covering the two Safaricom C2B callback endpoints:</p>
  * <ul>
- *   <li>POST /mpesa/v1/validation   -- pre-payment check, synchronous</li>
- *   <li>POST /mpesa/v1/confirmation -- post-payment notification, asynchronous</li>
+ *   <li>POST /api/v1/validation   -- pre-payment check, synchronous</li>
+ *   <li>POST /api/v1/confirmation -- post-payment notification, asynchronous</li>
  * </ul>
  *
  * <p>No admin or management endpoints are exposed via Swagger -- the Gateway
@@ -106,7 +106,7 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("mpesa-callbacks")
                 .displayName("M-Pesa Callbacks")
-                .pathsToMatch("/mpesa/v1/**")
+                .pathsToMatch("/api/v1/**")
                 .addOpenApiCustomizer(callbackTokenParameterCustomizer())
                 .build();
     }
@@ -121,7 +121,7 @@ public class OpenApiConfig {
      */
     public OpenApiCustomizer callbackTokenParameterCustomizer() {
         return openApi -> openApi.getPaths().forEach((path, item) -> {
-            if (path.startsWith("/mpesa/")) {
+            if (path.startsWith("/api/")) {
                 QueryParameter tokenParam = (QueryParameter) new QueryParameter()
                         .name("token")
                         .required(true)
