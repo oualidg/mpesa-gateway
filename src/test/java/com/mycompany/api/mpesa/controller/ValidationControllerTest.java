@@ -81,7 +81,7 @@ class ValidationControllerTest {
     void shouldReturn200WithAcceptedResultCode() throws Exception {
         when(validationService.validate(any())).thenReturn(ValidationResponse.accepted());
 
-        mockMvc.perform(post("/mpesa/v1/validation")
+        mockMvc.perform(post("/api/v1/validation")
                         .param("token", "test-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -102,7 +102,7 @@ class ValidationControllerTest {
                         ValidationResultCode.INVALID_ACCOUNT.code(),
                         ValidationResultCode.INVALID_ACCOUNT.description()));
 
-        mockMvc.perform(post("/mpesa/v1/validation")
+        mockMvc.perform(post("/api/v1/validation")
                         .param("token", "test-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -123,7 +123,7 @@ class ValidationControllerTest {
                 null, null, null, "254712345678", null, null, null
         );
 
-        mockMvc.perform(post("/mpesa/v1/validation")
+        mockMvc.perform(post("/api/v1/validation")
                         .param("token", "test-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -138,7 +138,7 @@ class ValidationControllerTest {
     @Test
     @DisplayName("Returns HTTP 401 when callback token is missing")
     void shouldReturn401WhenTokenIsMissing() throws Exception {
-        mockMvc.perform(post("/mpesa/v1/validation")
+        mockMvc.perform(post("/api/v1/validation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
                 .andExpect(status().isUnauthorized());
@@ -147,7 +147,7 @@ class ValidationControllerTest {
     @Test
     @DisplayName("Returns HTTP 401 when callback token is invalid")
     void shouldReturn401WhenTokenIsInvalid() throws Exception {
-        mockMvc.perform(post("/mpesa/v1/validation")
+        mockMvc.perform(post("/api/v1/validation")
                         .param("token", "wrong-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))

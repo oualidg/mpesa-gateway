@@ -52,8 +52,8 @@ import java.io.IOException;
 public class CallbackTokenFilter extends OncePerRequestFilter {
 
     private static final String TOKEN_PARAM = "token";
-    private static final String VALIDATION_PATH = "/mpesa/v1/validation";
-    private static final String CONFIRMATION_PATH = "/mpesa/v1/confirmation";
+    private static final String VALIDATION_PATH = "/api/v1/validation";
+    private static final String CONFIRMATION_PATH = "/api/v1/confirmation";
 
     private final CallbackProperties callbackProperties;
 

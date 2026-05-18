@@ -71,7 +71,7 @@ class CallbackTokenFilterTest {
     @DisplayName("Passes through confirmation callback with valid token")
     void shouldPassThroughConfirmationWithValidToken() throws Exception {
         when(callbackProperties.token()).thenReturn(VALID_TOKEN);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mpesa/v1/confirmation");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/confirmation");
         request.addParameter("token", VALID_TOKEN);
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -85,7 +85,7 @@ class CallbackTokenFilterTest {
     @DisplayName("Passes through validation callback with valid token")
     void shouldPassThroughValidationWithValidToken() throws Exception {
         when(callbackProperties.token()).thenReturn(VALID_TOKEN);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mpesa/v1/validation");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/validation");
         request.addParameter("token", VALID_TOKEN);
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -103,7 +103,7 @@ class CallbackTokenFilterTest {
     @DisplayName("Rejects confirmation callback with invalid token")
     void shouldRejectConfirmationWithInvalidToken() throws Exception {
         when(callbackProperties.token()).thenReturn(VALID_TOKEN);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mpesa/v1/confirmation");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/confirmation");
         request.addParameter("token", "wrong-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -116,7 +116,7 @@ class CallbackTokenFilterTest {
     @Test
     @DisplayName("Rejects confirmation callback with missing token")
     void shouldRejectConfirmationWithMissingToken() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mpesa/v1/confirmation");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/confirmation");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         callbackTokenFilter.doFilterInternal(request, response, filterChain);
@@ -129,7 +129,7 @@ class CallbackTokenFilterTest {
     @DisplayName("Rejects validation callback with invalid token")
     void shouldRejectValidationWithInvalidToken() throws Exception {
         when(callbackProperties.token()).thenReturn(VALID_TOKEN);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mpesa/v1/validation");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/validation");
         request.addParameter("token", "wrong-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 

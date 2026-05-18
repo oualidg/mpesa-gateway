@@ -64,7 +64,7 @@ class ConfirmationControllerTest {
     void shouldReturn200WhenConfirmationIngestedSuccessfully() throws Exception {
         org.mockito.Mockito.when(callbackProperties.token()).thenReturn("test-token");
 
-        mockMvc.perform(post("/mpesa/v1/confirmation")
+        mockMvc.perform(post("/api/v1/confirmation")
                         .param("token", "test-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -87,7 +87,7 @@ class ConfirmationControllerTest {
                 null, null, null, null, null, null, null
         );
 
-        mockMvc.perform(post("/mpesa/v1/confirmation")
+        mockMvc.perform(post("/api/v1/confirmation")
                         .param("token", "test-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -105,7 +105,7 @@ class ConfirmationControllerTest {
         doThrow(new RuntimeException("MongoDB failure"))
                 .when(confirmationService).ingest(any());
 
-        mockMvc.perform(post("/mpesa/v1/confirmation")
+        mockMvc.perform(post("/api/v1/confirmation")
                         .param("token", "test-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -121,7 +121,7 @@ class ConfirmationControllerTest {
     void shouldReturn401WhenTokenIsMissing() throws Exception {
         org.mockito.Mockito.when(callbackProperties.token()).thenReturn("test-token");
 
-        mockMvc.perform(post("/mpesa/v1/confirmation")
+        mockMvc.perform(post("/api/v1/confirmation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
                 .andExpect(status().isUnauthorized());
@@ -132,7 +132,7 @@ class ConfirmationControllerTest {
     void shouldReturn401WhenTokenIsInvalid() throws Exception {
         org.mockito.Mockito.when(callbackProperties.token()).thenReturn("test-token");
 
-        mockMvc.perform(post("/mpesa/v1/confirmation")
+        mockMvc.perform(post("/api/v1/confirmation")
                         .param("token", "wrong-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
