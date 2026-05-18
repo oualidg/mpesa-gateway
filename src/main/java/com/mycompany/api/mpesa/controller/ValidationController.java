@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@RequestMapping("/mpesa/v1")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Tag(name = "M-Pesa Validation", description = "Safaricom C2B validation callback endpoint")
 public class ValidationController {

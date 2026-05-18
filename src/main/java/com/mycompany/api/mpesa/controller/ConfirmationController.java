@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/mpesa/v1")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Tag(name = "M-Pesa Confirmation", description = "Safaricom C2B confirmation callback endpoint")
 public class ConfirmationController {
