@@ -70,6 +70,15 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         if (correlationId == null || correlationId.isBlank()) {
             correlationId = UUID.randomUUID().toString();
             log.info("No correlation ID in request — generated fallback. correlationId={}", correlationId);
+        } else if (correlationId.length() == 32) {
+            // Nginx $request_id is a 32-char hex string without hyphens.
+            // Format as UUID so downstream UUID.fromString() calls succeed.
+            correlationId = String.format("%s-%s-%s-%s-%s",
+                    correlationId.substring(0, 8),
+                    correlationId.substring(8, 12),
+                    correlationId.substring(12, 16),
+                    correlationId.substring(16, 20),
+                    correlationId.substring(20));
         }
 
         MDC.put(MDC_CORRELATION_ID, correlationId);
