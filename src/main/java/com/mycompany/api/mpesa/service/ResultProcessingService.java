@@ -13,6 +13,7 @@ package com.mycompany.api.mpesa.service;
 import com.mycompany.api.mpesa.document.MpesaEvent;
 import com.mycompany.api.mpesa.enums.MpesaEventState;
 import com.mycompany.api.mpesa.messaging.ProvisioningResultMessage;
+import com.mycompany.api.mpesa.metrics.EventStateMetrics;
 import com.mycompany.api.mpesa.repository.MpesaEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,9 @@ import java.time.Instant;
  * <p>Any exception thrown by this service causes {@link com.mycompany.api.mpesa.messaging.MpesaResultListener}
  * to reject the message to {@code results.dlq} for operator review.
  *
+ * <p>Terminal state transitions are recorded via {@link EventStateMetrics} for
+ * Prometheus scraping.
+ *
  * @author Oualid Gharach
  */
 @Slf4j
@@ -48,6 +52,7 @@ import java.time.Instant;
 public class ResultProcessingService {
 
     private final MpesaEventRepository mpesaEventRepository;
+    private final EventStateMetrics eventStateMetrics;
 
     /**
      * Processes a provisioning result and transitions the corresponding
@@ -97,6 +102,7 @@ public class ResultProcessingService {
         event.setPostedAt(now);
         event.setUpdatedAt(now);
         mpesaEventRepository.save(event);
+        eventStateMetrics.recordPosted();
         log.info("MpesaEvent transitioned to POSTED. transId={} billingReceipt={}",
                 event.getTransId(), billingReceipt);
     }
@@ -112,6 +118,7 @@ public class ResultProcessingService {
         event.setFailureReason(failureReason);
         event.setUpdatedAt(Instant.now());
         mpesaEventRepository.save(event);
+        eventStateMetrics.recordSuspended();
         log.warn("MpesaEvent transitioned to SUSPENDED. transId={} reason={}",
                 event.getTransId(), failureReason);
     }

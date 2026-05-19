@@ -54,7 +54,6 @@ public interface MpesaEventRepository extends MongoRepository<MpesaEvent, Object
             MpesaEventState state,
             Instant since);
 
-
     /**
      * Finds a {@link MpesaEvent} by its Safaricom transaction reference.
      *
@@ -65,4 +64,15 @@ public interface MpesaEventRepository extends MongoRepository<MpesaEvent, Object
      * @return the matching event, or empty if not found
      */
     Optional<MpesaEvent> findByTransId(String transId);
+
+    /**
+     * Returns the count of {@link MpesaEvent} documents in the given state.
+     *
+     * <p>Used by {@link com.mycompany.api.mpesa.metrics.EventStateMetrics} to
+     * feed the {@code mpesa.events.state} Prometheus gauge on each scrape.
+     *
+     * @param state the event state to count
+     * @return number of documents in the given state
+     */
+    long countByState(MpesaEventState state);
 }

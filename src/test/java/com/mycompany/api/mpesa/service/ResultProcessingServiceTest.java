@@ -13,6 +13,7 @@ package com.mycompany.api.mpesa.service;
 import com.mycompany.api.mpesa.document.MpesaEvent;
 import com.mycompany.api.mpesa.enums.MpesaEventState;
 import com.mycompany.api.mpesa.messaging.ProvisioningResultMessage;
+import com.mycompany.api.mpesa.metrics.EventStateMetrics;
 import com.mycompany.api.mpesa.repository.MpesaEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +46,9 @@ class ResultProcessingServiceTest {
 
     @Mock
     private MpesaEventRepository mpesaEventRepository;
+
+    @Mock
+    private EventStateMetrics eventStateMetrics;
 
     @InjectMocks
     private ResultProcessingService resultProcessingService;
@@ -79,6 +83,7 @@ class ResultProcessingServiceTest {
         assertThat(captor.getValue().getPostedAt()).isNotNull();
         assertThat(captor.getValue().getUpdatedAt()).isNotNull();
         assertThat(captor.getValue().getFailureReason()).isNull();
+        verify(eventStateMetrics).recordPosted();
     }
 
     // =========================================================================
@@ -100,6 +105,7 @@ class ResultProcessingServiceTest {
         assertThat(captor.getValue().getFailureReason()).isEqualTo("Account not found");
         assertThat(captor.getValue().getUpdatedAt()).isNotNull();
         assertThat(captor.getValue().getBillingReceipt()).isNull();
+        verify(eventStateMetrics).recordSuspended();
     }
 
     // =========================================================================
@@ -122,6 +128,7 @@ class ResultProcessingServiceTest {
         assertThat(captor.getValue().getState()).isEqualTo(MpesaEventState.POSTED);
         assertThat(captor.getValue().getBillingReceipt()).isEqualTo("receipt-123");
         assertThat(captor.getValue().getFailureReason()).isNull();
+        verify(eventStateMetrics).recordPosted();
     }
 
     // =========================================================================
@@ -140,6 +147,8 @@ class ResultProcessingServiceTest {
         resultProcessingService.process(result);
 
         verify(mpesaEventRepository, never()).save(any());
+        verify(eventStateMetrics, never()).recordPosted();
+        verify(eventStateMetrics, never()).recordSuspended();
     }
 
     // =========================================================================
@@ -158,5 +167,7 @@ class ResultProcessingServiceTest {
                 .hasMessageContaining("NLJ7RT61SV");
 
         verify(mpesaEventRepository, never()).save(any());
+        verify(eventStateMetrics, never()).recordPosted();
+        verify(eventStateMetrics, never()).recordSuspended();
     }
 }
