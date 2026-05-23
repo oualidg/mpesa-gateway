@@ -18,6 +18,7 @@ import com.mycompany.api.mpesa.enums.OutboxStatus;
 import com.mycompany.api.mpesa.util.BillRefNormaliser.ReferenceType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -32,7 +33,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mycompany.api.mpesa.config.AppConfig.PROVIDER_CODE;
+import static com.mycompany.api.mpesa.config.AppConfig.*;
 
 /**
  * Scheduled component that polls the outbox collection for pending entries and
@@ -181,9 +182,11 @@ public class OutboxProcessor {
             return;
         }
 
-        PaymentProvisioningMessage message = buildMessage(event);
-
+        MDC.put(MDC_CORRELATION_ID, event.getCorrelationId().toString());
+        MDC.put(MDC_TRANS_ID, event.getTransId());
         try {
+            PaymentProvisioningMessage message = buildMessage(event);
+
             rabbitTemplate.convertAndSend(
                     messagingProperties.exchange(),
                     messagingProperties.provisioningRoutingKey(),
@@ -197,6 +200,9 @@ public class OutboxProcessor {
             log.error("Failed to publish outbox entry — resetting to PENDING. " +
                     "transId={} entryId={} reason={}", event.getTransId(), entry.getId(), e.getMessage());
             resetToPending(entry, e.getMessage());
+        } finally {
+            MDC.remove(MDC_CORRELATION_ID);
+            MDC.remove(MDC_TRANS_ID);
         }
     }
 
